@@ -11,11 +11,11 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.theartofdev.edmodo.cropper.cropwindow.handle;
+package com.edmodo.cropper.cropwindow.handle;
 
 import android.graphics.Rect;
 
-import com.theartofdev.edmodo.cropper.cropwindow.edge.Edge;
+import com.edmodo.cropper.cropwindow.edge.Edge;
 
 /**
  * HandleHelper class to handle the center handle.

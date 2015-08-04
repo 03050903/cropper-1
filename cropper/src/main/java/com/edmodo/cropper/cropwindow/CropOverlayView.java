@@ -11,7 +11,7 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.theartofdev.edmodo.cropper.cropwindow;
+package com.edmodo.cropper.cropwindow;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -27,12 +27,12 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.theartofdev.edmodo.cropper.CropImageView;
-import com.theartofdev.edmodo.cropper.cropwindow.edge.Edge;
-import com.theartofdev.edmodo.cropper.cropwindow.handle.Handle;
-import com.theartofdev.edmodo.cropper.util.AspectRatioUtil;
-import com.theartofdev.edmodo.cropper.util.HandleUtil;
-import com.theartofdev.edmodo.cropper.util.PaintUtil;
+import com.edmodo.cropper.cropwindow.handle.Handle;
+import com.edmodo.cropper.util.AspectRatioUtil;
+import com.edmodo.cropper.util.PaintUtil;
+import com.edmodo.cropper.CropImageView;
+import com.edmodo.cropper.cropwindow.edge.Edge;
+import com.edmodo.cropper.util.HandleUtil;
 
 /**
  * A custom View representing the crop window and the shaded background outside the crop window.

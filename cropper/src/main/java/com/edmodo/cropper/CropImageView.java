@@ -11,7 +11,7 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.theartofdev.edmodo.cropper;
+package com.edmodo.cropper;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -36,10 +36,9 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import com.edmodo.cropper.R;
-import com.theartofdev.edmodo.cropper.cropwindow.CropOverlayView;
-import com.theartofdev.edmodo.cropper.cropwindow.edge.Edge;
-import com.theartofdev.edmodo.cropper.util.ImageViewUtil;
+import com.edmodo.cropper.util.ImageViewUtil;
+import com.edmodo.cropper.cropwindow.CropOverlayView;
+import com.edmodo.cropper.cropwindow.edge.Edge;
 
 /**
  * Custom view that provides cropping capabilities to an image.
@@ -220,9 +219,6 @@ public class CropImageView extends FrameLayout {
      * @param bitmap the Bitmap to set
      */
     public void setImageBitmap(Bitmap bitmap) {
-        if(mBitmap == bitmap) {
-            return;
-        }
 
         // if we allocated the bitmap, release it as fast as possible
         if (mBitmap != null && (mImageResource > 0 || mLoadedImageUri != null)) {
@@ -382,8 +378,8 @@ public class CropImageView extends FrameLayout {
         if (mBitmap != null) {
             Matrix matrix = new Matrix();
             matrix.postRotate(degrees);
-            Bitmap bitmap = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), matrix, true);
-            setImageBitmap(bitmap);
+            mBitmap = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), matrix, true);
+            setImageBitmap(mBitmap);
 
             mDegreesRotated += degrees;
             mDegreesRotated = mDegreesRotated % 360;

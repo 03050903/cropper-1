@@ -11,13 +11,13 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.theartofdev.edmodo.cropper.cropwindow.handle;
+package com.edmodo.cropper.cropwindow.handle;
 
 import android.graphics.Rect;
 
-import com.theartofdev.edmodo.cropper.cropwindow.edge.Edge;
-import com.theartofdev.edmodo.cropper.cropwindow.edge.EdgePair;
-import com.theartofdev.edmodo.cropper.util.AspectRatioUtil;
+import com.edmodo.cropper.cropwindow.edge.EdgePair;
+import com.edmodo.cropper.util.AspectRatioUtil;
+import com.edmodo.cropper.cropwindow.edge.Edge;
 
 /**
  * Abstract helper class to handle operations on a crop window Handle.

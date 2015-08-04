@@ -11,14 +11,14 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.theartofdev.edmodo.cropper.util;
+package com.edmodo.cropper.util;
 
 import android.content.Context;
 import android.util.Pair;
 import android.util.TypedValue;
 
-import com.theartofdev.edmodo.cropper.cropwindow.CropOverlayView;
-import com.theartofdev.edmodo.cropper.cropwindow.handle.Handle;
+import com.edmodo.cropper.cropwindow.handle.Handle;
+import com.edmodo.cropper.cropwindow.CropOverlayView;
 
 /**
  * Utility class to perform basic operations with Handles.

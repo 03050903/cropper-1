@@ -11,7 +11,7 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.theartofdev.edmodo.cropper.util;
+package com.edmodo.cropper.util;
 
 import android.content.Context;
 import android.graphics.Color;

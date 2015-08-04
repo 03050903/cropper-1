@@ -11,7 +11,7 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.theartofdev.edmodo.cropper.util;
+package com.edmodo.cropper.util;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -222,8 +222,7 @@ public class ImageViewUtil {
             file = new File(realPath);
         } catch (Exception ignored) {
         } finally {
-            if (cursor != null)
-                cursor.close();
+            closeSafe(cursor);
         }
 
         return file;
