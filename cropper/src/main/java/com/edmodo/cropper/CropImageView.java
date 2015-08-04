@@ -17,101 +17,61 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.ExifInterface;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import com.edmodo.cropper.util.ImageViewUtil;
 import com.edmodo.cropper.cropwindow.CropOverlayView;
 import com.edmodo.cropper.cropwindow.edge.Edge;
+import com.edmodo.cropper.util.ImageViewUtil;
 
 /**
  * Custom view that provides cropping capabilities to an image.
  */
 public class CropImageView extends FrameLayout {
 
-    //region: Fields and Consts
+    // Private Constants ///////////////////////////////////////////////////////
 
     private static final Rect EMPTY_RECT = new Rect();
 
+    // Member Variables ////////////////////////////////////////////////////////
+
     // Sets the default image guidelines to show when resizing
     public static final int DEFAULT_GUIDELINES = 1;
-
     public static final boolean DEFAULT_FIXED_ASPECT_RATIO = false;
-
     public static final int DEFAULT_ASPECT_RATIO_X = 1;
-
     public static final int DEFAULT_ASPECT_RATIO_Y = 1;
 
-    public static final int DEFAULT_SCALE_TYPE_INDEX = 0;
-
-    public static final int DEFAULT_CROP_SHAPE_INDEX = 0;
-
     private static final int DEFAULT_IMAGE_RESOURCE = 0;
-
-    private static final ImageView.ScaleType[] VALID_SCALE_TYPES = new ImageView.ScaleType[]{ImageView.ScaleType.CENTER_INSIDE, ImageView.ScaleType.FIT_CENTER};
-
-    private static final CropShape[] VALID_CROP_SHAPES = new CropShape[]{CropShape.RECTANGLE, CropShape.OVAL};
 
     private static final String DEGREES_ROTATED = "DEGREES_ROTATED";
 
     private ImageView mImageView;
-
     private CropOverlayView mCropOverlayView;
 
     private Bitmap mBitmap;
-
     private int mDegreesRotated = 0;
 
     private int mLayoutWidth;
-
     private int mLayoutHeight;
 
-    /**
-     * Instance variables for customizable attributes
-     */
+    // Instance variables for customizable attributes
     private int mGuidelines = DEFAULT_GUIDELINES;
-
     private boolean mFixAspectRatio = DEFAULT_FIXED_ASPECT_RATIO;
-
     private int mAspectRatioX = DEFAULT_ASPECT_RATIO_X;
-
     private int mAspectRatioY = DEFAULT_ASPECT_RATIO_Y;
-
     private int mImageResource = DEFAULT_IMAGE_RESOURCE;
 
-    private ImageView.ScaleType mScaleType = VALID_SCALE_TYPES[DEFAULT_SCALE_TYPE_INDEX];
-
-    /**
-     * The shape of the cropping area - rectangle/circular.
-     */
-    private CropImageView.CropShape mCropShape;
-
-    /**
-     * The URI that the image was loaded from (if loaded from URI)
-     */
-    private Uri mLoadedImageUri;
-
-    /**
-     * The sample size the image was loaded by if was loaded by URI
-     */
-    private int mLoadedSampleSize = 1;
-    //endregion
+    // Constructors ////////////////////////////////////////////////////////////
 
     public CropImageView(Context context) {
         super(context);
@@ -122,14 +82,14 @@ public class CropImageView extends FrameLayout {
         super(context, attrs);
 
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.CropImageView, 0, 0);
+
         try {
             mGuidelines = ta.getInteger(R.styleable.CropImageView_guidelines, DEFAULT_GUIDELINES);
-            mFixAspectRatio = ta.getBoolean(R.styleable.CropImageView_fixAspectRatio, DEFAULT_FIXED_ASPECT_RATIO);
+            mFixAspectRatio = ta.getBoolean(R.styleable.CropImageView_fixAspectRatio,
+                                            DEFAULT_FIXED_ASPECT_RATIO);
             mAspectRatioX = ta.getInteger(R.styleable.CropImageView_aspectRatioX, DEFAULT_ASPECT_RATIO_X);
             mAspectRatioY = ta.getInteger(R.styleable.CropImageView_aspectRatioY, DEFAULT_ASPECT_RATIO_Y);
             mImageResource = ta.getResourceId(R.styleable.CropImageView_imageResource, DEFAULT_IMAGE_RESOURCE);
-            mScaleType = VALID_SCALE_TYPES[ta.getInt(R.styleable.CropImageView_scaleType, DEFAULT_SCALE_TYPE_INDEX)];
-            mCropShape = VALID_CROP_SHAPES[ta.getInt(R.styleable.CropImageView_cropShape, DEFAULT_CROP_SHAPE_INDEX)];
         } finally {
             ta.recycle();
         }
@@ -137,328 +97,7 @@ public class CropImageView extends FrameLayout {
         init(context);
     }
 
-    /**
-     * Set the scale type of the image in the crop view
-     */
-    public ImageView.ScaleType getScaleType() {
-        return mScaleType;
-    }
-
-    /**
-     * Set the scale type of the image in the crop view
-     */
-    public void setScaleType(ImageView.ScaleType scaleType) {
-        mScaleType = scaleType;
-        if (mImageView != null)
-            mImageView.setScaleType(mScaleType);
-    }
-
-    /**
-     * The shape of the cropping area - rectangle/circular.
-     */
-    public CropImageView.CropShape getCropShape() {
-        return mCropShape;
-    }
-
-    /**
-     * The shape of the cropping area - rectangle/circular.
-     */
-    public void setCropShape(CropImageView.CropShape cropShape) {
-        if (cropShape != mCropShape) {
-            mCropShape = cropShape;
-            mCropOverlayView.setCropShape(cropShape);
-        }
-    }
-
-    /**
-     * Sets whether the aspect ratio is fixed or not; true fixes the aspect ratio, while
-     * false allows it to be changed.
-     *
-     * @param fixAspectRatio Boolean that signals whether the aspect ratio should be
-     * maintained.
-     */
-    public void setFixedAspectRatio(boolean fixAspectRatio) {
-        mCropOverlayView.setFixedAspectRatio(fixAspectRatio);
-    }
-
-    /**
-     * Sets the guidelines for the CropOverlayView to be either on, off, or to show when
-     * resizing the application.
-     *
-     * @param guidelines Integer that signals whether the guidelines should be on, off, or
-     * only showing when resizing.
-     */
-    public void setGuidelines(int guidelines) {
-        mCropOverlayView.setGuidelines(guidelines);
-    }
-
-    /**
-     * Sets the both the X and Y values of the aspectRatio.
-     *
-     * @param aspectRatioX int that specifies the new X value of the aspect ratio
-     * @param aspectRatioY int that specifies the new Y value of the aspect ratio
-     */
-    public void setAspectRatio(int aspectRatioX, int aspectRatioY) {
-        mAspectRatioX = aspectRatioX;
-        mCropOverlayView.setAspectRatioX(mAspectRatioX);
-
-        mAspectRatioY = aspectRatioY;
-        mCropOverlayView.setAspectRatioY(mAspectRatioY);
-    }
-
-    /**
-     * Returns the integer of the imageResource
-     */
-    public int getImageResource() {
-        return mImageResource;
-    }
-
-    /**
-     * Sets a Bitmap as the content of the CropImageView.
-     *
-     * @param bitmap the Bitmap to set
-     */
-    public void setImageBitmap(Bitmap bitmap) {
-
-        // if we allocated the bitmap, release it as fast as possible
-        if (mBitmap != null && (mImageResource > 0 || mLoadedImageUri != null)) {
-            mBitmap.recycle();
-        }
-
-        // clean the loaded image flags for new image
-        mImageResource = 0;
-        mLoadedImageUri = null;
-        mLoadedSampleSize = 1;
-        mDegreesRotated = 0;
-
-        mBitmap = bitmap;
-        mImageView.setImageBitmap(mBitmap);
-        if (mCropOverlayView != null) {
-            mCropOverlayView.resetCropOverlayView();
-        }
-    }
-
-    /**
-     * Sets a Bitmap and initializes the image rotation according to the EXIT data.<br>
-     * <br>
-     * The EXIF can be retrieved by doing the following:
-     * <code>ExifInterface exif = new ExifInterface(path);</code>
-     *
-     * @param bitmap the original bitmap to set; if null, this
-     * @param exif the EXIF information about this bitmap; may be null
-     */
-    public void setImageBitmap(Bitmap bitmap, ExifInterface exif) {
-        if (bitmap != null && exif != null) {
-            ImageViewUtil.RotateBitmapResult result = ImageViewUtil.rotateBitmapByExif(bitmap, exif);
-            bitmap = result.bitmap;
-            mDegreesRotated = result.degrees;
-        }
-        setImageBitmap(bitmap);
-    }
-
-    /**
-     * Sets a Drawable as the content of the CropImageView.
-     *
-     * @param resId the drawable resource ID to set
-     */
-    public void setImageResource(int resId) {
-        if (resId != 0) {
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resId);
-            setImageBitmap(bitmap);
-
-            mImageResource = resId;
-        }
-    }
-
-    /**
-     * Sets a bitmap loaded from the given Android URI as the content of the CropImageView.<br>
-     * Can be used with URI from gallery or camera source.<br>
-     * Will rotate the image by exif data.<br>
-     *
-     * @param uri the URI to load the image from
-     */
-    public void setImageUri(Uri uri) {
-        if (uri != null) {
-
-            DisplayMetrics metrics = getResources().getDisplayMetrics();
-            double densityAdj = metrics.density > 1 ? 1 / metrics.density : 1;
-
-            int width = (int) (metrics.widthPixels * densityAdj);
-            int height = (int) (metrics.heightPixels * densityAdj);
-            ImageViewUtil.DecodeBitmapResult decodeResult =
-                    ImageViewUtil.decodeSampledBitmap(getContext(), uri, width, height);
-
-            ImageViewUtil.RotateBitmapResult rotateResult =
-                    ImageViewUtil.rotateBitmapByExif(getContext(), decodeResult.bitmap, uri);
-
-            setImageBitmap(rotateResult.bitmap);
-
-            mLoadedImageUri = uri;
-            mLoadedSampleSize = decodeResult.sampleSize;
-            mDegreesRotated = rotateResult.degrees;
-        }
-    }
-
-    /**
-     * Gets the crop window's position relative to the source Bitmap (not the image
-     * displayed in the CropImageView).
-     *
-     * @return a RectF instance containing cropped area boundaries of the source Bitmap
-     */
-    public Rect getActualCropRect() {
-        if (mBitmap != null) {
-            final Rect displayedImageRect = ImageViewUtil.getBitmapRect(mBitmap, mImageView, mScaleType);
-
-            // Get the scale factor between the actual Bitmap dimensions and the displayed dimensions for width.
-            final float actualImageWidth = mBitmap.getWidth();
-            final float displayedImageWidth = displayedImageRect.width();
-            final float scaleFactorWidth = actualImageWidth / displayedImageWidth;
-
-            // Get the scale factor between the actual Bitmap dimensions and the displayed dimensions for height.
-            final float actualImageHeight = mBitmap.getHeight();
-            final float displayedImageHeight = displayedImageRect.height();
-            final float scaleFactorHeight = actualImageHeight / displayedImageHeight;
-
-            // Get crop window position relative to the displayed image.
-            final float displayedCropLeft = Edge.LEFT.getCoordinate() - displayedImageRect.left;
-            final float displayedCropTop = Edge.TOP.getCoordinate() - displayedImageRect.top;
-            final float displayedCropWidth = Edge.getWidth();
-            final float displayedCropHeight = Edge.getHeight();
-
-            // Scale the crop window position to the actual size of the Bitmap.
-            float actualCropLeft = displayedCropLeft * scaleFactorWidth;
-            float actualCropTop = displayedCropTop * scaleFactorHeight;
-            float actualCropRight = actualCropLeft + displayedCropWidth * scaleFactorWidth;
-            float actualCropBottom = actualCropTop + displayedCropHeight * scaleFactorHeight;
-
-            // Correct for floating point errors. Crop rect boundaries should not exceed the source Bitmap bounds.
-            actualCropLeft = Math.max(0f, actualCropLeft);
-            actualCropTop = Math.max(0f, actualCropTop);
-            actualCropRight = Math.min(mBitmap.getWidth(), actualCropRight);
-            actualCropBottom = Math.min(mBitmap.getHeight(), actualCropBottom);
-
-            return new Rect((int) actualCropLeft, (int) actualCropTop, (int) actualCropRight, (int) actualCropBottom);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Gets the crop window's position relative to the source Bitmap (not the image
-     * displayed in the CropImageView) and the original rotation.
-     *
-     * @return a RectF instance containing cropped area boundaries of the source Bitmap
-     */
-    @SuppressWarnings("SuspiciousNameCombination")
-    public Rect getActualCropRectNoRotation() {
-        if (mBitmap != null) {
-            Rect rect = getActualCropRect();
-            int rotateSide = mDegreesRotated / 90;
-            if (rotateSide == 1) {
-                rect.set(rect.top, mBitmap.getWidth() - rect.right, rect.bottom, mBitmap.getWidth() - rect.left);
-            } else if (rotateSide == 2) {
-                rect.set(mBitmap.getWidth() - rect.right, mBitmap.getHeight() - rect.bottom, mBitmap.getWidth() - rect.left, mBitmap.getHeight() - rect.top);
-            } else if (rotateSide == 3) {
-                rect.set(mBitmap.getHeight() - rect.bottom, rect.left, mBitmap.getHeight() - rect.top, rect.right);
-            }
-            rect.set(rect.left * mLoadedSampleSize, rect.top * mLoadedSampleSize, rect.right * mLoadedSampleSize, rect.bottom * mLoadedSampleSize);
-            return rect;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Rotates image by the specified number of degrees clockwise. Cycles from 0 to 360
-     * degrees.
-     *
-     * @param degrees Integer specifying the number of degrees to rotate.
-     */
-    public void rotateImage(int degrees) {
-        if (mBitmap != null) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(degrees);
-            mBitmap = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), matrix, true);
-            setImageBitmap(mBitmap);
-
-            mDegreesRotated += degrees;
-            mDegreesRotated = mDegreesRotated % 360;
-        }
-    }
-
-    /**
-     * Gets the cropped image based on the current crop window.
-     *
-     * @return a new Bitmap representing the cropped image
-     */
-    public Bitmap getCroppedImage() {
-        return getCroppedImage(0, 0);
-    }
-
-    /**
-     * Gets the cropped image based on the current crop window.<br>
-     * If image loaded from URI will use sample size to fir the requested width and height.
-     *
-     * @return a new Bitmap representing the cropped image
-     */
-    public Bitmap getCroppedImage(int reqWidth, int reqHeight) {
-        if (mBitmap != null) {
-            if (mLoadedImageUri != null && mLoadedSampleSize > 1) {
-                Rect rect = getActualCropRectNoRotation();
-                reqWidth = reqWidth > 0 ? reqWidth : rect.width();
-                reqHeight = reqHeight > 0 ? reqHeight : rect.height();
-                ImageViewUtil.DecodeBitmapResult result =
-                        ImageViewUtil.decodeSampledBitmapRegion(getContext(), mLoadedImageUri, rect, reqWidth, reqHeight);
-
-                Bitmap bitmap = result.bitmap;
-                if (mDegreesRotated > 0) {
-                    bitmap = ImageViewUtil.rotateBitmap(bitmap, mDegreesRotated);
-                }
-
-                return bitmap;
-            } else {
-                Rect rect = getActualCropRect();
-                return Bitmap.createBitmap(mBitmap, rect.left, rect.top, rect.width(), rect.height());
-            }
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Gets the cropped circle image based on the current crop selection.
-     *
-     * @return a new Circular Bitmap representing the cropped image
-     */
-    public Bitmap getCroppedOvalImage() {
-        if (mBitmap != null) {
-            Bitmap cropped = getCroppedImage();
-
-            int width = cropped.getWidth();
-            int height = cropped.getHeight();
-            Bitmap output = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-            Canvas canvas = new Canvas(output);
-
-            final int color = 0xff424242;
-            final Paint paint = new Paint();
-
-            paint.setAntiAlias(true);
-            canvas.drawARGB(0, 0, 0, 0);
-            paint.setColor(color);
-
-            RectF rect = new RectF(0, 0, width, height);
-            canvas.drawOval(rect, paint);
-            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-            canvas.drawBitmap(cropped, 0, 0, paint);
-
-            return output;
-        } else {
-            return null;
-        }
-    }
-
-    //region: Private methods
+    // View Methods ////////////////////////////////////////////////////////////
 
     @Override
     public Parcelable onSaveInstanceState() {
@@ -498,7 +137,7 @@ public class CropImageView extends FrameLayout {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 
         if (mBitmap != null) {
-            final Rect bitmapRect = ImageViewUtil.getBitmapRect(mBitmap, this, mScaleType);
+            final Rect bitmapRect = ImageViewUtil.getBitmapRectCenterInside(mBitmap, this);
             mCropOverlayView.setBitmapRect(bitmapRect);
         } else {
             mCropOverlayView.setBitmapRect(EMPTY_RECT);
@@ -519,9 +158,8 @@ public class CropImageView extends FrameLayout {
 
             // Bypasses a baffling bug when used within a ScrollView, where
             // heightSize is set to 0.
-            if (heightSize == 0) {
+            if (heightSize == 0)
                 heightSize = mBitmap.getHeight();
-            }
 
             int desiredWidth;
             int desiredHeight;
@@ -563,11 +201,10 @@ public class CropImageView extends FrameLayout {
             mLayoutWidth = width;
             mLayoutHeight = height;
 
-            final Rect bitmapRect = ImageViewUtil.getBitmapRect(mBitmap.getWidth(),
-                    mBitmap.getHeight(),
-                    mLayoutWidth,
-                    mLayoutHeight,
-                    mScaleType);
+            final Rect bitmapRect = ImageViewUtil.getBitmapRectCenterInside(mBitmap.getWidth(),
+                                                                            mBitmap.getHeight(),
+                                                                            mLayoutWidth,
+                                                                            mLayoutHeight);
             mCropOverlayView.setBitmapRect(bitmapRect);
 
             // MUST CALL THIS
@@ -593,25 +230,259 @@ public class CropImageView extends FrameLayout {
         }
     }
 
+    // Public Methods //////////////////////////////////////////////////////////
+
+    /**
+     * Returns the integer of the imageResource
+     * 
+     * @param int the image resource id
+     */
+    public int getImageResource() {
+        return mImageResource;
+    }
+
+    /**
+     * Sets a Bitmap as the content of the CropImageView.
+     * 
+     * @param bitmap the Bitmap to set
+     */
+    public void setImageBitmap(Bitmap bitmap) {
+
+        mBitmap = bitmap;
+        mImageView.setImageBitmap(mBitmap);
+
+        if (mCropOverlayView != null) {
+            mCropOverlayView.resetCropOverlayView();
+        }
+    }
+
+    /**
+     * Sets a Bitmap and initializes the image rotation according to the EXIT data.
+     * <p>
+     * The EXIF can be retrieved by doing the following:
+     * <code>ExifInterface exif = new ExifInterface(path);</code>
+     * 
+     * @param bitmap the original bitmap to set; if null, this
+     * @param exif the EXIF information about this bitmap; may be null
+     */
+    public void setImageBitmap(Bitmap bitmap, ExifInterface exif) {
+
+        if (bitmap == null) {
+            return;
+        }
+
+        if (exif == null) {
+            setImageBitmap(bitmap);
+            return;
+        }
+
+        final Matrix matrix = new Matrix();
+        final int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+        int rotate = -1;
+
+        switch (orientation) {
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                rotate = 270;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                rotate = 180;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                rotate = 90;
+                break;
+        }
+
+        if (rotate == -1) {
+            setImageBitmap(bitmap);
+        } else {
+            matrix.postRotate(rotate);
+            final Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap,
+                                                             0,
+                                                             0,
+                                                             bitmap.getWidth(),
+                                                             bitmap.getHeight(),
+                                                             matrix,
+                                                             true);
+            setImageBitmap(rotatedBitmap);
+            bitmap.recycle();
+        }
+    }
+
+    /**
+     * Sets a Drawable as the content of the CropImageView.
+     * 
+     * @param resId the drawable resource ID to set
+     */
+    public void setImageResource(int resId) {
+        if (resId != 0) {
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resId);
+            setImageBitmap(bitmap);
+        }
+    }
+
+    /**
+     * Gets the cropped image based on the current crop window.
+     * 
+     * @return a new Bitmap representing the cropped image
+     */
+    public Bitmap getCroppedImage() {
+
+        final Rect displayedImageRect = ImageViewUtil.getBitmapRectCenterInside(mBitmap, mImageView);
+
+        // Get the scale factor between the actual Bitmap dimensions and the
+        // displayed dimensions for width.
+        final float actualImageWidth = mBitmap.getWidth();
+        final float displayedImageWidth = displayedImageRect.width();
+        final float scaleFactorWidth = actualImageWidth / displayedImageWidth;
+
+        // Get the scale factor between the actual Bitmap dimensions and the
+        // displayed dimensions for height.
+        final float actualImageHeight = mBitmap.getHeight();
+        final float displayedImageHeight = displayedImageRect.height();
+        final float scaleFactorHeight = actualImageHeight / displayedImageHeight;
+
+        // Get crop window position relative to the displayed image.
+        final float cropWindowX = Edge.LEFT.getCoordinate() - displayedImageRect.left;
+        final float cropWindowY = Edge.TOP.getCoordinate() - displayedImageRect.top;
+        final float cropWindowWidth = Edge.getWidth();
+        final float cropWindowHeight = Edge.getHeight();
+
+        // Scale the crop window position to the actual size of the Bitmap.
+        final float actualCropX = cropWindowX * scaleFactorWidth;
+        final float actualCropY = cropWindowY * scaleFactorHeight;
+        final float actualCropWidth = cropWindowWidth * scaleFactorWidth;
+        final float actualCropHeight = cropWindowHeight * scaleFactorHeight;
+
+        // Crop the subset from the original Bitmap.
+        final Bitmap croppedBitmap = Bitmap.createBitmap(mBitmap,
+                                                         (int) actualCropX,
+                                                         (int) actualCropY,
+                                                         (int) actualCropWidth,
+                                                         (int) actualCropHeight);
+
+        return croppedBitmap;
+    }
+
+    /**
+     * Gets the crop window's position relative to the source Bitmap (not the image
+     * displayed in the CropImageView).
+     * 
+     * @return a RectF instance containing cropped area boundaries of the source Bitmap
+     */
+    public RectF getActualCropRect() {
+
+        final Rect displayedImageRect = ImageViewUtil.getBitmapRectCenterInside(mBitmap, mImageView);
+
+        // Get the scale factor between the actual Bitmap dimensions and the
+        // displayed dimensions for width.
+        final float actualImageWidth = mBitmap.getWidth();
+        final float displayedImageWidth = displayedImageRect.width();
+        final float scaleFactorWidth = actualImageWidth / displayedImageWidth;
+
+        // Get the scale factor between the actual Bitmap dimensions and the
+        // displayed dimensions for height.
+        final float actualImageHeight = mBitmap.getHeight();
+        final float displayedImageHeight = displayedImageRect.height();
+        final float scaleFactorHeight = actualImageHeight / displayedImageHeight;
+
+        // Get crop window position relative to the displayed image.
+        final float displayedCropLeft = Edge.LEFT.getCoordinate() - displayedImageRect.left;
+        final float displayedCropTop = Edge.TOP.getCoordinate() - displayedImageRect.top;
+        final float displayedCropWidth = Edge.getWidth();
+        final float displayedCropHeight = Edge.getHeight();
+
+        // Scale the crop window position to the actual size of the Bitmap.
+        float actualCropLeft = displayedCropLeft * scaleFactorWidth;
+        float actualCropTop = displayedCropTop * scaleFactorHeight;
+        float actualCropRight = actualCropLeft + displayedCropWidth * scaleFactorWidth;
+        float actualCropBottom = actualCropTop + displayedCropHeight * scaleFactorHeight;
+
+        // Correct for floating point errors. Crop rect boundaries should not
+        // exceed the source Bitmap bounds.
+        actualCropLeft = Math.max(0f, actualCropLeft);
+        actualCropTop = Math.max(0f, actualCropTop);
+        actualCropRight = Math.min(mBitmap.getWidth(), actualCropRight);
+        actualCropBottom = Math.min(mBitmap.getHeight(), actualCropBottom);
+
+        final RectF actualCropRect = new RectF(actualCropLeft,
+                                               actualCropTop,
+                                               actualCropRight,
+                                               actualCropBottom);
+
+        return actualCropRect;
+    }
+
+    /**
+     * Sets whether the aspect ratio is fixed or not; true fixes the aspect ratio, while
+     * false allows it to be changed.
+     * 
+     * @param fixAspectRatio Boolean that signals whether the aspect ratio should be
+     *            maintained.
+     */
+    public void setFixedAspectRatio(boolean fixAspectRatio) {
+        mCropOverlayView.setFixedAspectRatio(fixAspectRatio);
+    }
+
+    /**
+     * Sets the guidelines for the CropOverlayView to be either on, off, or to show when
+     * resizing the application.
+     * 
+     * @param guidelines Integer that signals whether the guidelines should be on, off, or
+     *            only showing when resizing.
+     */
+    public void setGuidelines(int guidelines) {
+        mCropOverlayView.setGuidelines(guidelines);
+    }
+
+    /**
+     * Sets the both the X and Y values of the aspectRatio.
+     * 
+     * @param aspectRatioX int that specifies the new X value of the aspect ratio
+     * @param aspectRatioX int that specifies the new Y value of the aspect ratio
+     */
+    public void setAspectRatio(int aspectRatioX, int aspectRatioY) {
+        mAspectRatioX = aspectRatioX;
+        mCropOverlayView.setAspectRatioX(mAspectRatioX);
+
+        mAspectRatioY = aspectRatioY;
+        mCropOverlayView.setAspectRatioY(mAspectRatioY);
+    }
+
+    /**
+     * Rotates image by the specified number of degrees clockwise. Cycles from 0 to 360
+     * degrees.
+     * 
+     * @param degrees Integer specifying the number of degrees to rotate.
+     */
+    public void rotateImage(int degrees) {
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+        mBitmap = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), matrix, true);
+        setImageBitmap(mBitmap);
+
+        mDegreesRotated += degrees;
+        mDegreesRotated = mDegreesRotated % 360;
+    }
+
+    // Private Methods /////////////////////////////////////////////////////////
+
     private void init(Context context) {
 
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View v = inflater.inflate(R.layout.crop_image_view, this, true);
 
         mImageView = (ImageView) v.findViewById(R.id.ImageView_image);
-        mImageView.setScaleType(mScaleType);
 
         setImageResource(mImageResource);
-
         mCropOverlayView = (CropOverlayView) v.findViewById(R.id.CropOverlayView);
         mCropOverlayView.setInitialAttributeValues(mGuidelines, mFixAspectRatio, mAspectRatioX, mAspectRatioY);
-        mCropOverlayView.setCropShape(mCropShape);
     }
 
     /**
      * Determines the specs for the onMeasure function. Calculates the width or height
      * depending on the mode.
-     *
+     * 
      * @param measureSpecMode The mode of the measured width or height.
      * @param measureSpecSize The size of the measured width or height.
      * @param desiredSize The desired size of the measured width or height.
@@ -634,16 +505,5 @@ public class CropImageView extends FrameLayout {
 
         return spec;
     }
-    //endregion
 
-    //region: Inner class: CropShape
-
-    /**
-     * The possible cropping area shape
-     */
-    public static enum CropShape {
-        RECTANGLE,
-        OVAL
-    }
-    //endregion
 }

@@ -15,8 +15,8 @@ package com.edmodo.cropper.cropwindow.handle;
 
 import android.graphics.Rect;
 
-import com.edmodo.cropper.util.AspectRatioUtil;
 import com.edmodo.cropper.cropwindow.edge.Edge;
+import com.edmodo.cropper.util.AspectRatioUtil;
 
 /**
  * Handle helper class to handle horizontal handles (i.e. top and bottom
@@ -68,16 +68,16 @@ class HorizontalHandleHelper extends HandleHelper {
 
         // Check if we have gone out of bounds on the sides, and fix.
         if (Edge.LEFT.isOutsideMargin(imageRect, snapRadius) && !mEdge.isNewRectangleOutOfBounds(Edge.LEFT,
-                imageRect,
-                targetAspectRatio)) {
+                                                                                                 imageRect,
+                                                                                                 targetAspectRatio)) {
             final float offset = Edge.LEFT.snapToRect(imageRect);
             Edge.RIGHT.offset(-offset);
             mEdge.adjustCoordinate(targetAspectRatio);
 
         }
         if (Edge.RIGHT.isOutsideMargin(imageRect, snapRadius) && !mEdge.isNewRectangleOutOfBounds(Edge.RIGHT,
-                imageRect,
-                targetAspectRatio)) {
+                                                                                                  imageRect,
+                                                                                                  targetAspectRatio)) {
             final float offset = Edge.RIGHT.snapToRect(imageRect);
             Edge.LEFT.offset(-offset);
             mEdge.adjustCoordinate(targetAspectRatio);

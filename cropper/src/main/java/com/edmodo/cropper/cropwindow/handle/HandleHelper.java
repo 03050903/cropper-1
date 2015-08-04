@@ -15,9 +15,9 @@ package com.edmodo.cropper.cropwindow.handle;
 
 import android.graphics.Rect;
 
+import com.edmodo.cropper.cropwindow.edge.Edge;
 import com.edmodo.cropper.cropwindow.edge.EdgePair;
 import com.edmodo.cropper.util.AspectRatioUtil;
-import com.edmodo.cropper.cropwindow.edge.Edge;
 
 /**
  * Abstract helper class to handle operations on a crop window Handle.
@@ -27,9 +27,7 @@ abstract class HandleHelper {
     // Member Variables ////////////////////////////////////////////////////////
 
     private static final float UNFIXED_ASPECT_RATIO_CONSTANT = 1;
-
     private Edge mHorizontalEdge;
-
     private Edge mVerticalEdge;
 
     // Save the Pair object as a member variable to avoid having to instantiate
@@ -40,11 +38,11 @@ abstract class HandleHelper {
 
     /**
      * Constructor.
-     *
+     * 
      * @param horizontalEdge the horizontal edge associated with this handle;
-     * may be null
+     *            may be null
      * @param verticalEdge the vertical edge associated with this handle; may be
-     * null
+     *            null
      */
     HandleHelper(Edge horizontalEdge, Edge verticalEdge) {
         mHorizontalEdge = horizontalEdge;
@@ -56,13 +54,13 @@ abstract class HandleHelper {
 
     /**
      * Updates the crop window by directly setting the Edge coordinates.
-     *
+     * 
      * @param x the new x-coordinate of this handle
      * @param y the new y-coordinate of this handle
      * @param imageRect the bounding rectangle of the image
      * @param parentView the parent View containing the image
      * @param snapRadius the maximum distance (in pixels) at which the crop
-     * window should snap to the image
+     *            window should snap to the image
      */
     void updateCropWindow(float x,
                           float y,
@@ -83,14 +81,14 @@ abstract class HandleHelper {
     /**
      * Updates the crop window by directly setting the Edge coordinates; this
      * method maintains a given aspect ratio.
-     *
+     * 
      * @param x the new x-coordinate of this handle
      * @param y the new y-coordinate of this handle
      * @param targetAspectRatio the aspect ratio to maintain
      * @param imageRect the bounding rectangle of the image
      * @param parentView the parent View containing the image
      * @param snapRadius the maximum distance (in pixels) at which the crop
-     * window should snap to the image
+     *            window should snap to the image
      */
     abstract void updateCropWindow(float x,
                                    float y,
@@ -102,9 +100,9 @@ abstract class HandleHelper {
      * Gets the Edges associated with this handle (i.e. the Edges that should be
      * moved when this handle is dragged). This is used when we are not
      * maintaining the aspect ratio.
-     *
+     * 
      * @return the active edge as a pair (the pair may contain null values for
-     * the <code>primary</code>, <code>secondary</code> or both fields)
+     *         the <code>primary</code>, <code>secondary</code> or both fields)
      */
     EdgePair getActiveEdges() {
         return mActiveEdges;
@@ -114,7 +112,7 @@ abstract class HandleHelper {
      * Gets the Edges associated with this handle as an ordered Pair. The
      * <code>primary</code> Edge in the pair is the determining side. This
      * method is used when we need to maintain the aspect ratio.
-     *
+     * 
      * @param x the x-coordinate of the touch point
      * @param y the y-coordinate of the touch point
      * @param targetAspectRatio the aspect ratio that we are maintaining
@@ -143,7 +141,7 @@ abstract class HandleHelper {
     /**
      * Gets the aspect ratio of the resulting crop window if this handle were
      * dragged to the given point.
-     *
+     * 
      * @param x the x-coordinate
      * @param y the y-coordinate
      * @return the aspect ratio

@@ -15,8 +15,8 @@ package com.edmodo.cropper.cropwindow.handle;
 
 import android.graphics.Rect;
 
-import com.edmodo.cropper.cropwindow.edge.EdgePair;
 import com.edmodo.cropper.cropwindow.edge.Edge;
+import com.edmodo.cropper.cropwindow.edge.EdgePair;
 
 /**
  * HandleHelper class to handle corner Handles (i.e. top-left, top-right,
